@@ -12,7 +12,7 @@ public class Boid : MonoBehaviour
 {
     public static List<Boid> boidList;
     private Vector3 boundaryCenter;
-    private float boundaryRadius = 1.5f;
+    private float boundaryRadius = 5f;
     private bool turningAround = false;
     private Vector3 vectorBetween, velocityOther, targetPosition;
     private Quaternion targetRotation;
@@ -47,13 +47,13 @@ public class Boid : MonoBehaviour
     {
         agent = new RNNRLAgent(10, 10, 3);
         Initialize();
-        InvokeRepeating("RunProgram", 1.0f, 1.0f);
+        InvokeRepeating("RunProgram", 1.0f, 2.0f);
     }
 
     public void Initialize()
     {
         transform.forward = UnityEngine.Random.insideUnitSphere.normalized;
-        speed = UnityEngine.Random.Range(0.1f, 1.5f);
+        speed = UnityEngine.Random.Range(0.1f, 4f);
         velocity = transform.forward * speed;
         prevVelocity = velocity;
     }
@@ -65,21 +65,30 @@ public class Boid : MonoBehaviour
         FindNeighbors();       
         TurnAtBounds();
         Move();
-        TurnAtBounds();
-        //kill();
     }
 
     public void RunProgram()
     {
         //kill();
-        GetAverageDirection();
-        GetMassCenterOfNeighbors();
-        GetDistanceToClosestNeighbor();
-        float[] inputs = new float[] { prevVelocity.x, prevVelocity.y, prevVelocity.z, alignmentForce.x, alignmentForce.y, alignmentForce.z, cohesionForce.x, cohesionForce.y, cohesionForce.z, closestDistance };
-        float[] output = agent.ForwardPropagation(inputs);
+        if (!outOfBounds())
+        {
+            GetAverageDirection();
+            GetMassCenterOfNeighbors();
+            GetDistanceToClosestNeighbor();
+            float[] inputs = new float[] { prevVelocity.x, prevVelocity.y, prevVelocity.z, alignmentForce.x, alignmentForce.y, alignmentForce.z, cohesionForce.x, cohesionForce.y, cohesionForce.z, closestDistance };
+            float[] output = agent.ForwardPropagation(inputs);
 
-        prevVelocity = velocity;
-        velocity = new Vector3(output[0], output[1], output[2]);
+            prevVelocity = velocity;
+            velocity = new Vector3(output[0], output[1], output[2]);
+            Debug.Log("running RNN");
+        }
+        else {
+            Debug.Log("out of bounds");
+            TurnAtBounds();
+            Move();
+        }
+            
+
     }
     public void SetBoundarySphere(Vector3 center, float radius)
     {
@@ -94,8 +103,8 @@ public class Boid : MonoBehaviour
         // velocity = Vector3.Lerp(velocity, velocity + acceleration, Time.deltaTime * boidSettings.speed * 2);
         //velocity += acceleration;
 
-        /*velocity = Vector3.ClampMagnitude(velocity, speed);
-        if (velocity.sqrMagnitude <= .1f)
+        velocity = Vector3.ClampMagnitude(velocity, speed);
+        /*if (velocity.sqrMagnitude <= .1f)
             velocity = transform.forward * speed;*/
 
         // Update position and rotation
@@ -117,8 +126,8 @@ public class Boid : MonoBehaviour
                 turningAround = true;
             }
             // Keep turning and moving towards targetPosition until targetRotation reached
-            targetRotation = Quaternion.LookRotation(targetPosition - transform.position);
-            //targetRotation = Quaternion.LookRotation(targetPosition); original but changed to above and now works and fish don't go out of bounds so much 
+            //targetRotation = Quaternion.LookRotation(targetPosition - transform.position);
+            targetRotation = Quaternion.LookRotation(targetPosition); //original but changed to above and now works and fish don't go out of bounds so much 
 
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
             velocity = Vector3.Slerp(velocity, targetPosition - transform.position, Time.deltaTime * speed);
@@ -249,6 +258,11 @@ public class Boid : MonoBehaviour
             }
 
         }
+    }
+
+    private Boolean outOfBounds()
+    {
+        return ((transform.position - boundaryCenter).sqrMagnitude >= (boundaryRadius * boundaryRadius));
     }
 
 

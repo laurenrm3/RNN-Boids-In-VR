@@ -12,12 +12,21 @@ public class BoidSpawner : MonoBehaviour
 {
     public int boidCount = 10;
     private Vector3 boidLocation;
-    public float boundaryRadius = 1.5f;
+    public float boundaryRadius = 5f;
     public GameObject boidPrefab;
     [SerializeField] private Transform spawnLocation;
 
     [SerializeField] public Volume volume;
     private Boolean toKill = false;
+
+
+    private void Awake()
+    {
+        if (!spawnLocation)
+            spawnLocation = this.transform;
+        else
+            boundaryRadius = spawnLocation.localScale.x / 2;
+    }
 
     // Start is called before the first frame update
     void Start()
