@@ -31,6 +31,21 @@ public class RNNRLAgent
         InitializeWeights();
     }
 
+    public float[,] getInputHiddenWeights()
+    {
+        return inputHiddenWeights;
+    }
+
+    public float[,] getHiddenHiddenWeights()
+    {
+        return hiddenHiddenWeights;
+    }
+
+    public float[,] getHiddenOutputWeights()
+    {
+        return hiddenOutputWeights;
+    }
+
     private void InitializeWeights()
     {
         InitializeWeightMatrix(inputHiddenWeights, inputSize, hiddenSize);
@@ -98,7 +113,7 @@ public class RNNRLAgent
     }
     
     //not needed
-    public void BackwardPropagation(float[] inputs, float[] outputs, float[] target)
+/*    public void BackwardPropagation(float[] inputs, float[] outputs, float[] target)
     {
         float[] outputErrors = ComputeOutputErrors(outputs, target);
 
@@ -109,7 +124,7 @@ public class RNNRLAgent
         UpdateInputHiddenWeights(inputs, hiddenErrors);
 
         UpdateHiddenHiddenWeights(hiddenErrors);
-    }
+    }*/
 
     private float[] ComputeOutputErrors(float[] outputs, float[] target)
     {
@@ -222,4 +237,32 @@ public class RNNRLAgent
             }
         }
     }
+
+    //added to alter weights 
+    public void SetWeights(float[,] inputHidden, float[,] hiddenHidden, float[,] hiddenOutput)
+    {
+        SetWeightMatrix(inputHiddenWeights, inputHidden);
+        SetWeightMatrix(hiddenHiddenWeights, hiddenHidden);
+        SetWeightMatrix(hiddenOutputWeights, hiddenOutput);
+    }
+
+    private void SetWeightMatrix(float[,] targetWeights, float[,] newWeights)
+    {
+        int rows = targetWeights.GetLength(0);
+        int cols = targetWeights.GetLength(1);
+
+        if (newWeights.GetLength(0) != rows || newWeights.GetLength(1) != cols)
+        {
+            throw new System.ArgumentException("New weights matrix dimensions must match the target weights matrix dimensions.");
+        }
+
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                targetWeights[i, j] = newWeights[i, j];
+            }
+        }
+    }
+
 }
