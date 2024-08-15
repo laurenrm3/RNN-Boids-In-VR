@@ -10,14 +10,17 @@ using UnityEngine.Scripting.APIUpdating;
 
 public class BoidSpawner : MonoBehaviour
 {
-    public int boidCount = 10;
+    public int boidCount = 15;
     private Vector3 boidLocation;
-    public float boundaryRadius = 5f;
+    private float boundaryRadius = 5f;
     public GameObject boidPrefab;
     [SerializeField] private Transform spawnLocation;
 
     [SerializeField] public Volume volume;
     private Boolean toKill = false;
+
+    [SerializeField] private GameObject myXRRig;
+    private Boid currBoid;
 
 
     private void Awake()
@@ -32,6 +35,8 @@ public class BoidSpawner : MonoBehaviour
     void Start()
     {
         SpawnBoidsIndividual();
+        //int randomBoid = UnityEngine.Random.Range(0, boidCount);
+        currBoid = Boid.boidList[0];
     }
 
     private void SpawnBoidsIndividual()
@@ -47,6 +52,7 @@ public class BoidSpawner : MonoBehaviour
         {
             boidLocation = UnityEngine.Random.insideUnitSphere.normalized * UnityEngine.Random.Range(0, boundaryRadius * 0.9f);
             newBoid = Instantiate(boidPrefab, boidLocation, Quaternion.identity, this.transform).GetComponent<Boid>();
+            newBoid.name = "boid" + i;
             //newBoid.boidSettings = boidSettings;
             //newBoid = this.AddComponent<Boid>();
             newBoid.SetBoundarySphere(spawnLocation.position, boundaryRadius);
@@ -55,7 +61,11 @@ public class BoidSpawner : MonoBehaviour
 
     void Update()
     {
- 
+        Vector3 previousPosition = currBoid.transform.position;
+        myXRRig.transform.position = currBoid.transform.position + new Vector3(-1, 0, 0);
+        Vector3 currentPosition = currBoid.transform.position;
+        Vector3 currentDirection = (previousPosition - currentPosition).normalized;
+        myXRRig.transform.LookAt(currBoid.velocity);
     }
 
     private IEnumerator killEffect()

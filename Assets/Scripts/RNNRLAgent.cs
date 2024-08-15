@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 
 public class RNNRLAgent
@@ -239,12 +240,12 @@ public class RNNRLAgent
     }
 
     //added to alter weights 
-    public void SetWeights(float[,] inputHidden, float[,] hiddenHidden, float[,] hiddenOutput)
+/*    public void SetWeights(float[,] inputHidden, float[,] hiddenHidden, float[,] hiddenOutput)
     {
         SetWeightMatrix(inputHiddenWeights, inputHidden);
         SetWeightMatrix(hiddenHiddenWeights, hiddenHidden);
         SetWeightMatrix(hiddenOutputWeights, hiddenOutput);
-    }
+    }*/
 
     private void SetWeightMatrix(float[,] targetWeights, float[,] newWeights)
     {
@@ -260,9 +261,22 @@ public class RNNRLAgent
         {
             for (int j = 0; j < cols; j++)
             {
-                targetWeights[i, j] = newWeights[i, j];
+                float chance = UnityEngine.Random.Range(0f, 1f);
+                if(chance > 0.5)
+                    targetWeights[i, j] = newWeights[i, j];
             }
         }
+    }
+
+    public void MutateWeightMatrices(RNNRLAgent parentAgent)
+    {
+        float[,] parentInputHidden = parentAgent.getInputHiddenWeights();
+        float[,] parentHiddenHidden = parentAgent.getHiddenHiddenWeights();
+        float[,] parentOutputHidden = parentAgent.getHiddenOutputWeights();
+
+        SetWeightMatrix(inputHiddenWeights, parentInputHidden);
+        SetWeightMatrix(hiddenHiddenWeights, parentHiddenHidden);
+        SetWeightMatrix(hiddenOutputWeights, parentOutputHidden);
     }
 
 }

@@ -17,10 +17,11 @@ public class Boid : MonoBehaviour
     private Vector3 vectorBetween, velocityOther, targetPosition;
     private Quaternion targetRotation;
     
-    private Vector3 velocity;
+    public Vector3 velocity;
     private Vector3 prevVelocity;
     
     private float speed;
+    private float maxSpeed = 3;
 
     private RNNRLAgent agent;
     private Dictionary<Boid, (Vector3, Vector3, Vector3, float, int)> neighbors;
@@ -69,7 +70,7 @@ public class Boid : MonoBehaviour
 
     public void RunProgram()
     {
-        //kill();
+        kill();
         if (!outOfBounds())
         {
             GetAverageDirection();
@@ -80,10 +81,11 @@ public class Boid : MonoBehaviour
 
             prevVelocity = velocity;
             velocity = new Vector3(output[0], output[1], output[2]);
-            Debug.Log("running RNN");
+            TurnAtBounds();
+            //Debug.Log("running RNN");
         }
         else {
-            Debug.Log("out of bounds");
+            //Debug.Log("out of bounds");
             TurnAtBounds();
             Move();
         }
@@ -103,13 +105,20 @@ public class Boid : MonoBehaviour
         // velocity = Vector3.Lerp(velocity, velocity + acceleration, Time.deltaTime * boidSettings.speed * 2);
         //velocity += acceleration;
 
-        velocity = Vector3.ClampMagnitude(velocity, speed);
+        velocity = Vector3.ClampMagnitude(velocity, maxSpeed);
         /*if (velocity.sqrMagnitude <= .1f)
             velocity = transform.forward * speed;*/
 
         // Update position and rotation
         if (velocity != Vector3.zero)
         {
+            transform.position += velocity * Time.deltaTime;
+            transform.rotation = Quaternion.LookRotation(velocity);
+        }
+        else //because boids kept getting stuck at the bounds
+        {
+            velocity = new Vector3(UnityEngine.Random.Range(0.1f, 2.5f), UnityEngine.Random.Range(0.1f, 2.5f), UnityEngine.Random.Range(0.1f, 2.5f));
+            velocity = Vector3.ClampMagnitude(velocity, maxSpeed);
             transform.position += velocity * Time.deltaTime;
             transform.rotation = Quaternion.LookRotation(velocity);
         }
@@ -131,9 +140,10 @@ public class Boid : MonoBehaviour
 
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
             velocity = Vector3.Slerp(velocity, targetPosition - transform.position, Time.deltaTime * speed);
+            velocity = Vector3.ClampMagnitude(velocity, maxSpeed); //addeds
         }
         // After reaching target rotation (within range), stop turning around
-        else if (Quaternion.Angle(transform.rotation, targetRotation) <= .01f)
+        else if (Quaternion.Angle(transform.rotation, targetRotation) <= .001f)
             turningAround = false;
     }
 
@@ -158,7 +168,9 @@ public class Boid : MonoBehaviour
                 {
                     if (neighbors.ContainsKey(other))
                     {
-                        int count = neighbors[other].Item5 + 1;
+                        
+                        int count = neighbors[other].Item5 + 1; 
+                        
                         neighbors[other] = (other.transform.position, velocityOther, vectorBetween, sqrMagnitudeTemp, count);
                     }
                     else
@@ -226,7 +238,7 @@ public class Boid : MonoBehaviour
         //return 0.0f;
     }
 
-    private void kill(ref Boolean toKill)
+    private void kill()
     {
  /*       foreach (KeyValuePair<Boid, (Vector3, Vector3, Vector3, float, int)> item in neighbors)
         {
@@ -246,15 +258,15 @@ public class Boid : MonoBehaviour
             (Vector3, Vector3, Vector3, float, int) curr = neighbors[item];
             if (curr.Item5 > 3)
             {
-                Debug.Log("killed");
+                //Debug.Log("killed");
                 //StartCoroutine(killEffect());
-                toKill = true;
                 neighbors[item] = (curr.Item1, curr.Item2, curr.Item3, curr.Item4, 0);
+                changeWeightMatrices(item);
+                Debug.Log("mutated");
             }
             else
             {
-                Debug.Log(curr.Item5);
-                toKill = false;
+                //Debug.Log(curr.Item5);
             }
 
         }
@@ -265,5 +277,13 @@ public class Boid : MonoBehaviour
         return ((transform.position - boundaryCenter).sqrMagnitude >= (boundaryRadius * boundaryRadius));
     }
 
-
+    public RNNRLAgent getAgent()
+    {
+        return agent;
+    }
+    private void changeWeightMatrices(Boid parent)
+    {
+        RNNRLAgent parentAgent = parent.getAgent();
+        agent.MutateWeightMatrices(parentAgent);
+    }
 }

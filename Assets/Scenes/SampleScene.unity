@@ -459,7 +459,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab2f00ae5784abc469f7eb0715e8f91b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boidCount: 10
+  boidCount: 15
   boundaryRadius: 1.5
   boidPrefab: {fileID: 7147685746709287111, guid: eaca4679698e760489701ded12fee583, type: 3}
   spawnLocation: {fileID: 1947135638}
